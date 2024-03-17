@@ -6,7 +6,7 @@ type Product struct {
 	Label        string
 	Description  string
 	Categories   map[int]Category
-	Quantity     int32
+	Quantity     uint16
 	Availability Availability
 	Format       ProductFormat
 	ReleasedAt   string
