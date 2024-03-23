@@ -52,7 +52,7 @@ func CloseMongoDBConnection(client *mongo.Client) {
 
 	err := client.Disconnect(context.TODO())
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	log.Println("Connection to MongoDB successfully closed.")

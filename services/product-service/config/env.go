@@ -22,12 +22,12 @@ func initEnv() *Env {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	err = viper.Unmarshal(&env)
 	if err != nil {
-		panic(err)
+		log.Fatalln(err)
 	}
 
 	if env.AppEnv == "development" {
