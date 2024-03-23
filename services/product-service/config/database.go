@@ -10,7 +10,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func openMongoDBConnection(env Env) mongo.Client {
+func OpenMongoDBConnection(env Env) mongo.Client {
 	dbHost := env.DBHost
 	dbPort := env.DBPort
 	dbUser := env.DBUser
@@ -45,7 +45,7 @@ func openMongoDBConnection(env Env) mongo.Client {
 	return *client
 }
 
-func closeMongoDBConnection(client *mongo.Client) {
+func CloseMongoDBConnection(client *mongo.Client) {
 	if client != nil {
 		return
 	}

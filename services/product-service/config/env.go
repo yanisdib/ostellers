@@ -16,7 +16,7 @@ type Env struct {
 	DBName        string `map.structure:"DB_NAME"`
 }
 
-func createEnv() *Env {
+func initEnv() *Env {
 	env := Env{}
 	viper.SetConfigFile(".env")
 
