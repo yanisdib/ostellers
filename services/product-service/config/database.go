@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -23,7 +24,8 @@ func OpenMongoDBConnection(env Env) mongo.Client {
 	}
 
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
-	opts := options.Client().ApplyURI(mongodbURI).SetServerAPIOptions(serverAPI)
+	opts := options.Client().SetTimeout(10 * time.Second).ApplyURI(mongodbURI).SetServerAPIOptions(serverAPI)
+
 	client, err := mongo.Connect(context.TODO(), opts)
 	if err != nil {
 		panic(err)
