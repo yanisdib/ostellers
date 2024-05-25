@@ -18,9 +18,9 @@ type Product struct {
 	Price        float32             `bson:"price,omitempty" json:"price,omitempty"`
 	Availability Availability        `bson:"availability" json:"availability,omitempty"`
 	Formats      []ProductFormat     `bson:"formats" json:"formats,omitempty"`
-	ReleasedAt   time.Time           `bson:"released_at" json:"releasedAt,omitempty"`
-	CreatedAt    time.Time           `bson:"created_at" json:"createdAt,omitempty"`
-	UpdatedAt    time.Time           `bson:"updated_at,omitempty" json:"updatedAt,omitempty"`
+	ReleasedAt   *time.Time          `bson:"released_at" json:"releasedAt,omitempty"`
+	CreatedAt    *time.Time          `bson:"created_at" json:"createdAt,omitempty"`
+	UpdatedAt    *time.Time          `bson:"updated_at,omitempty" json:"updatedAt,omitempty"`
 }
 
 // ProductImageAttrs defines a product images attributes

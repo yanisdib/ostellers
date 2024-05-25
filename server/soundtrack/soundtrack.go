@@ -8,10 +8,10 @@ import (
 
 // Soundtrack defines a soundtrack product
 type Soundtrack struct {
-	ID primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
-	*product.Product
-	Genres    []string `bson:"genres" json:"genres" validate:"required"`
-	Tracklist []Disc   `bson:"tracklist" json:"tracklist,omitempty"`
+	ID               primitive.ObjectID `bson:"_id,omitempty" json:"id,omitempty"`
+	*product.Product `bson:",inline" json:",inline"`
+	Genres           []string `bson:"genres" json:"genres" validate:"required"`
+	Tracklist        []Disc   `bson:"tracklist" json:"tracklist,omitempty"`
 }
 
 // Disc defines the attributes of a soundtrack disc

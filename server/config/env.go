@@ -1,6 +1,7 @@
 package config
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -16,15 +17,11 @@ func GetMongoURI() string {
 		log.Fatal(errors.ERR_ENV_FILE_LOADING)
 	}
 
-	// dbUser := os.Getenv("ATLAS_DB_USER")
-	// dbPassword := os.Getenv("ATLAS_DB_PASSWORD")
-	// dbHost := os.Getenv("ATLAS_DB_HOST")
+	dbUser := os.Getenv("ATLAS_DB_USER")
+	dbPassword := os.Getenv("ATLAS_DB_PASSWORD")
+	dbHost := os.Getenv("ATLAS_HOST")
 
-	uri := "mongodb+srv://yanisdib:5fMFdvBsZZ26qsX5@eva-01.bg9f1tx.mongodb.net/"
-
-	// fmt.Sprintf("mongodb+srv://%s:%s@%s", dbUser, dbPassword, dbHost)
-
-	return uri
+	return fmt.Sprintf("mongodb+srv://%s:%s@%s", dbUser, dbPassword, dbHost)
 
 }
 

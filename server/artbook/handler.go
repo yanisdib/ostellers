@@ -2,11 +2,15 @@ package artbook
 
 import (
 	"context"
+	"encoding/json"
+	"io"
+	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
+	"yanisdib/ostellers/errors"
 	"yanisdib/ostellers/product"
 )
 
@@ -67,6 +71,67 @@ func GetByID() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, artbook)
+
+	}
+
+}
+
+func DeleteByID() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		artbookID := c.Param("id")
+		defer cancel()
+
+		deleteCount, err := DeleteArtbookByID(ctx, artbookID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, err)
+			return
+		}
+
+		var message string
+		if deleteCount == 0 {
+			message = errors.ERR_ITEM_NOT_FOUND
+			c.JSON(http.StatusNotFound, message)
+		} else {
+			message = "Artbook deleted successfully."
+			c.JSON(http.StatusOK, message)
+		}
+
+	}
+
+}
+
+func UpdateByID() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+		input, _ := io.ReadAll(c.Request.Body)
+		update := make(map[string]interface{})
+
+		if err := json.Unmarshal(input, &update); err != nil {
+			log.Print(err)
+			c.JSON(http.StatusBadRequest, "Failed to parse JSON")
+			return
+		}
+
+		currentDate := time.Now().UTC()
+		update["updated_at"] = currentDate
+
+		artbookID, found := c.Params.Get("id")
+		if !found {
+			c.JSON(http.StatusBadRequest, "Invalid artbook ID")
+			return
+		}
+
+		updatedArtbook := UpdateArtbookByID(c, artbookID, update)
+		if updatedArtbook == nil {
+			c.JSON(http.StatusBadRequest, "This artbook couldn't be updated")
+			return
+		}
+
+		c.JSON(http.StatusOK, "Artbook updated successfully")
 
 	}
 

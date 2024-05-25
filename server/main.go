@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -13,16 +14,17 @@ func main() {
 
 	var once sync.Once
 
-	// running this function only once
+	// init and run server only once
 	once.Do(func() {
 
 		router := gin.Default()
-		// establishing connection to MongoDB
+
 		config.OpenDBConnection()
-		// creating artbook routes
 		artbook.NewArtbookRoutes(router)
-		// running server
-		router.Run("localhost:6000")
+
+		if err := router.Run("localhost:6000"); err != nil {
+			log.Fatal("Oops! An error occured while runnning the server at localhost:6000")
+		}
 
 	})
 
