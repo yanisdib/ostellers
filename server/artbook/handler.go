@@ -107,7 +107,10 @@ func UpdateByID() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		input, _ := io.ReadAll(c.Request.Body)
+		defer cancel()
+
 		update := make(map[string]interface{})
 
 		if err := json.Unmarshal(input, &update); err != nil {
@@ -125,7 +128,7 @@ func UpdateByID() gin.HandlerFunc {
 			return
 		}
 
-		updatedArtbook := UpdateArtbookByID(c, artbookID, update)
+		updatedArtbook := UpdateArtbookByID(ctx, artbookID, update)
 		if updatedArtbook == nil {
 			c.JSON(http.StatusBadRequest, "This artbook couldn't be updated")
 			return
