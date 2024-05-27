@@ -33,6 +33,24 @@ func CreateArtbook(ctx context.Context, input *CreateInput) (*mongo.InsertOneRes
 
 }
 
+func GetAllArtbooks(ctx context.Context) []*Artbook {
+
+	cursor, err := artbookCollection.Find(ctx, bson.D{}, options.Find())
+	if err != nil {
+		log.Print(err)
+		return nil
+	}
+
+	var artbooks []*Artbook
+	if err := cursor.All(ctx, &artbooks); err != nil {
+		log.Print(err)
+		return nil
+	}
+
+	return artbooks
+
+}
+
 func GetArtbookByID(ctx context.Context, id string) (*Artbook, error) {
 
 	objectID, _ := primitive.ObjectIDFromHex(id)

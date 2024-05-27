@@ -31,6 +31,13 @@ type CreateInput struct {
 	ReleasedAt   string                      `json:"releasedAt,omitempty"`
 }
 
+type GetArtbooksResponse struct {
+	Count    int        `json:"count"`
+	Previous string     `json:"previous,omitempty"`
+	Next     string     `json:"next,omitempty"`
+	Results  []*Artbook `json:"results"`
+}
+
 func Create() gin.HandlerFunc {
 
 	return func(c *gin.Context) {
@@ -51,6 +58,32 @@ func Create() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusCreated, "Artbook created successfully")
+
+	}
+
+}
+
+func GetAll() gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		artbooks := GetAllArtbooks(ctx)
+		if artbooks == nil {
+			c.JSON(http.StatusOK, "No artbooks found.")
+			return
+		}
+
+		c.JSON(
+			http.StatusOK,
+			GetArtbooksResponse{
+				Count:   len(artbooks),
+				Next:    "localhost:6060/artbooks",
+				Results: artbooks,
+			},
+		)
 
 	}
 
