@@ -1,6 +1,7 @@
 package product
 
 import (
+	"log"
 	"time"
 )
 
@@ -10,15 +11,15 @@ type Product struct {
 	Label        string              `bson:"label" json:"label"`
 	Description  string              `bson:"description,omitempty" json:"description,omitempty"`
 	Categories   []string            `bson:"categories" json:"categories"`
-	Tags         []string            `bson:"tags,omitempty" json:"tags"`
+	Tags         []string            `bson:"tags,omitempty" json:"tags,omitempty"`
 	Artists      []string            `bson:"artists" json:"artists"`
 	Editors      []string            `bson:"editors" json:"editors"`
 	Pictures     []ProductImageAttrs `bson:"pictures,omitempty" json:"pictures,omitempty"`
 	Stock        uint32              `bson:"stock" json:"stock"`
 	Price        float32             `bson:"price,omitempty" json:"price,omitempty"`
-	Availability Availability        `bson:"availability" json:"availability,omitempty"`
-	Formats      []ProductFormat     `bson:"formats" json:"formats,omitempty"`
-	ReleasedAt   *time.Time          `bson:"released_at" json:"releasedAt,omitempty"`
+	Availability string              `bson:"availability" json:"availability"`
+	Formats      []string            `bson:"formats" json:"formats"`
+	ReleasedAt   *time.Time          `bson:"released_at" json:"releasedAt"`
 	CreatedAt    *time.Time          `bson:"created_at" json:"createdAt,omitempty"`
 	UpdatedAt    *time.Time          `bson:"updated_at,omitempty" json:"updatedAt,omitempty"`
 }
@@ -27,7 +28,7 @@ type Product struct {
 type ProductImageAttrs struct {
 	URI     string `bson:"uri" json:"uri" validate:"required"`
 	Title   string `bson:"title" json:"title" validate:"required"`
-	Caption string `bson:"caption" json:"caption,omitempty"`
+	Caption string `bson:"caption,omitempty" json:"caption,omitempty"`
 	Order   uint8  `bson:"order" json:"order" validate:"required"`
 }
 
@@ -35,30 +36,42 @@ type ProductImageAttrs struct {
 type Availability int
 
 const (
-	IN_STOCK Availability = iota
-	SOLD_OUT
-	RESTOCKING
-	LIMITED
-	UPCOMING_RELEASE
+	InStock Availability = iota
+	SoldOut
+	Restocking
+	Limited
+	UpcomingRelease
 )
 
-var Availabilities = map[string]Availability{
-	"IN STOCK":         IN_STOCK,
-	"SOLD OUT":         SOLD_OUT,
-	"RESTOCKING":       RESTOCKING,
-	"LIMITED":          LIMITED,
-	"UPCOMING RELEASE": UPCOMING_RELEASE,
+var AvailabilitiesByLabel = map[string]Availability{
+	"in stock":         InStock,
+	"sold out":         SoldOut,
+	"restocking":       Restocking,
+	"limited":          Limited,
+	"upcoming release": UpcomingRelease,
 }
 
 // ProductFormat enumerates all different product format
 type ProductFormat int
 
 const (
-	PHYSICAL ProductFormat = iota
-	DIGITAL
+	Physical ProductFormat = iota
+	Digital
 )
 
-var ProductFormats = map[string]ProductFormat{
-	"PHYSICAL": PHYSICAL,
-	"DIGITAL":  DIGITAL,
+var FormatsByLabel = map[string]ProductFormat{
+	"physical": Physical,
+	"digital":  Digital,
+}
+
+func IsValidFormat(value string) bool {
+
+	_, found := FormatsByLabel[value]
+	if !found {
+		log.Print("Invalid product format")
+		return found
+	}
+
+	return found
+
 }

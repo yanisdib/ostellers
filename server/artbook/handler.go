@@ -31,7 +31,7 @@ type CreateInput struct {
 	ReleasedAt   string                      `json:"releasedAt,omitempty"`
 }
 
-type GetArtbooksResponse struct {
+type GetArtbooksOutput struct {
 	Count    int        `json:"count"`
 	Previous string     `json:"previous,omitempty"`
 	Next     string     `json:"next,omitempty"`
@@ -57,7 +57,7 @@ func Create() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, "Artbook created successfully")
+		c.JSON(http.StatusCreated, gin.H{"status": "201", "message": "Artbook created successfully"})
 
 	}
 
@@ -72,13 +72,13 @@ func GetAll() gin.HandlerFunc {
 
 		artbooks := GetAllArtbooks(ctx)
 		if artbooks == nil {
-			c.JSON(http.StatusOK, "No artbooks found.")
+			c.JSON(http.StatusOK, gin.H{"status": "200", "message": "No artbooks found"})
 			return
 		}
 
 		c.JSON(
 			http.StatusOK,
-			GetArtbooksResponse{
+			GetArtbooksOutput{
 				Count:   len(artbooks),
 				Next:    "localhost:6060/artbooks",
 				Results: artbooks,
@@ -148,7 +148,7 @@ func UpdateByID() gin.HandlerFunc {
 
 		if err := json.Unmarshal(input, &update); err != nil {
 			log.Print(err)
-			c.JSON(http.StatusBadRequest, "Failed to parse JSON")
+			c.JSON(http.StatusBadRequest, gin.H{"status": "400", "message": "Failed to parse JSON"})
 			return
 		}
 
@@ -157,17 +157,17 @@ func UpdateByID() gin.HandlerFunc {
 
 		artbookID, found := c.Params.Get("id")
 		if !found {
-			c.JSON(http.StatusBadRequest, "Invalid artbook ID")
+			c.JSON(http.StatusBadRequest, gin.H{"status": "400", "message": "The requested ID is invalid"})
 			return
 		}
 
 		updatedArtbook := UpdateArtbookByID(ctx, artbookID, update)
 		if updatedArtbook == nil {
-			c.JSON(http.StatusBadRequest, "This artbook couldn't be updated")
+			c.JSON(http.StatusBadRequest, gin.H{"status": "400", "message": "Artbook not found"})
 			return
 		}
 
-		c.JSON(http.StatusOK, "Artbook updated successfully")
+		c.JSON(http.StatusOK, gin.H{"status": "200", "message": "Artbook updated successfully"})
 
 	}
 

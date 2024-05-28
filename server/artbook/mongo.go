@@ -15,13 +15,14 @@ import (
 	"yanisdib/ostellers/product"
 )
 
-var artbookCollection *mongo.Collection = config.GetCollection("artbooks")
+var artbooksCollection *mongo.Collection = config.GetCollection("artbooks")
 
+// Create Artbook stores a new artbook in database
 func CreateArtbook(ctx context.Context, input *CreateInput) (*mongo.InsertOneResult, error) {
 
 	newArtbook := toArtbook(input)
 
-	result, err := artbookCollection.InsertOne(ctx, newArtbook)
+	result, err := artbooksCollection.InsertOne(ctx, newArtbook)
 	if err != nil {
 		defer log.Println(errors.ERR_ITEM_NOT_CREATED)
 		return nil, err
@@ -33,9 +34,10 @@ func CreateArtbook(ctx context.Context, input *CreateInput) (*mongo.InsertOneRes
 
 }
 
+// GetAllArtbooks finds all artbooks stored in database
 func GetAllArtbooks(ctx context.Context) []*Artbook {
 
-	cursor, err := artbookCollection.Find(ctx, bson.D{}, options.Find())
+	cursor, err := artbooksCollection.Find(ctx, bson.D{}, options.Find())
 	if err != nil {
 		log.Print(err)
 		return nil
@@ -51,13 +53,14 @@ func GetAllArtbooks(ctx context.Context) []*Artbook {
 
 }
 
+// GetArtbookByID finds an artbook for a given ID in database
 func GetArtbookByID(ctx context.Context, id string) (*Artbook, error) {
 
 	objectID, _ := primitive.ObjectIDFromHex(id)
 
 	var artbook *Artbook
 
-	err := artbookCollection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&artbook)
+	err := artbooksCollection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&artbook)
 	if err != nil {
 		log.Println(errors.ERR_ITEM_NOT_FOUND)
 		return nil, err
@@ -67,30 +70,33 @@ func GetArtbookByID(ctx context.Context, id string) (*Artbook, error) {
 
 }
 
+// DeleteArtbookByID deletes an artbook for a given ID in database
 func DeleteArtbookByID(ctx context.Context, id string) (deleteCount int64, err error) {
 
 	objectID, _ := primitive.ObjectIDFromHex(id)
 
-	res, err := artbookCollection.DeleteOne(ctx, bson.M{"_id": objectID})
+	result, err := artbooksCollection.DeleteOne(ctx, bson.M{"_id": objectID})
 	if err != nil {
 		log.Fatalf("An error occured while deleting artbook with ID: %s", id)
 		return 0, err
 	}
 
-	if res.DeletedCount == 0 {
+	if result.DeletedCount == 0 {
 		log.Println(errors.ERR_ITEM_NOT_FOUND)
 	}
 
-	return res.DeletedCount, nil
+	return result.DeletedCount, nil
 
 }
 
+// UpdateArtbookByID finds an artbook for a given ID and update it
 func UpdateArtbookByID(ctx context.Context, id string, update interface{}) *Artbook {
 
 	objectID, _ := primitive.ObjectIDFromHex(id)
+
 	var updatedArtbook Artbook
 
-	err := artbookCollection.FindOneAndUpdate(
+	err := artbooksCollection.FindOneAndUpdate(
 		ctx,
 		bson.M{"_id": objectID},
 		bson.M{"$set": update},
@@ -108,6 +114,7 @@ func UpdateArtbookByID(ctx context.Context, id string, update interface{}) *Artb
 
 }
 
+// toArtbook converts a create input to an artbook struct
 func toArtbook(input *CreateInput) *Artbook {
 
 	releaseDate, err := time.Parse("2006-01-02", input.ReleasedAt)
@@ -119,10 +126,17 @@ func toArtbook(input *CreateInput) *Artbook {
 	releaseDate = releaseDate.UTC()
 	createdAt := time.Now().UTC()
 
-	var formats []product.ProductFormat
 	for _, format := range input.Formats {
-		parsedFormat := product.ProductFormats
-		formats = append(formats, parsedFormat[format])
+		isValid := product.IsValidFormat(format)
+		if !isValid {
+			return nil
+		}
+	}
+
+	_, found := product.AvailabilitiesByLabel[input.Availability]
+	if !found {
+		log.Print("Invalid availability")
+		return nil
 	}
 
 	product := &product.Product{
@@ -136,8 +150,8 @@ func toArtbook(input *CreateInput) *Artbook {
 		Pictures:     input.Pictures,
 		Stock:        input.Stock,
 		Price:        input.Price,
-		Availability: product.Availabilities[input.Availability],
-		Formats:      formats,
+		Availability: input.Availability,
+		Formats:      input.Formats,
 		ReleasedAt:   &releaseDate,
 		CreatedAt:    &createdAt,
 	}
