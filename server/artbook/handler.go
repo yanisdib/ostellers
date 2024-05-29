@@ -4,13 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"io"
-	"log"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 
-	"yanisdib/ostellers/errors"
 	"yanisdib/ostellers/product"
 )
 
@@ -47,17 +45,32 @@ func Create() gin.HandlerFunc {
 		defer cancel()
 
 		if err := c.BindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, err.Error())
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  http.StatusBadRequest,
+				"error":   err.Error(),
+				"message": "Failed to parse JSON",
+			})
+
 			return
 		}
 
-		_, err := CreateArtbook(ctx, input)
+		newArtbook, err := CreateArtbook(ctx, input)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, err.Error())
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  http.StatusInternalServerError,
+				"error":   err.Error(),
+				"message": "Failed to create a new artbook",
+				"detail":  "Ensure that the ID provided in the request is correct",
+			})
+
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{"status": "201", "message": "Artbook created successfully"})
+		c.JSON(http.StatusCreated, gin.H{
+			"status":  http.StatusCreated,
+			"message": "Artbook created successfully",
+			"result":  newArtbook,
+		})
 
 	}
 
@@ -70,20 +83,33 @@ func GetAll() gin.HandlerFunc {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		artbooks := GetAllArtbooks(ctx)
-		if artbooks == nil {
-			c.JSON(http.StatusOK, gin.H{"status": "200", "message": "No artbooks found"})
+		artbooks, err := GetAllArtbooks(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  http.StatusInternalServerError,
+				"error":   err.Error(),
+				"message": "Failed to retrieve artbooks",
+				"detail":  "<customMessage>",
+			})
 			return
 		}
 
-		c.JSON(
-			http.StatusOK,
-			GetArtbooksOutput{
-				Count:   len(artbooks),
-				Next:    "localhost:6060/artbooks",
-				Results: artbooks,
-			},
-		)
+		if artbooks == nil {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  http.StatusOK,
+				"message": "No artbooks found",
+				"results": artbooks,
+			})
+		} else {
+			c.JSON(
+				http.StatusOK,
+				GetArtbooksOutput{
+					Count:   len(artbooks),
+					Next:    "localhost:6060/artbooks?limit=10&offset=10",
+					Results: artbooks,
+				},
+			)
+		}
 
 	}
 
@@ -99,7 +125,13 @@ func GetByID() gin.HandlerFunc {
 
 		artbook, err := GetArtbookByID(ctx, artbookID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, err)
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  http.StatusInternalServerError,
+				"error":   err.Error(),
+				"message": "Failed to retrieve this artbook",
+				"detail":  "Ensure that the ID provided in the request is correct",
+			})
+
 			return
 		}
 
@@ -114,22 +146,43 @@ func DeleteByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		artbookID := c.Param("id")
+		artbookID, found := c.Params.Get("id")
 		defer cancel()
 
-		deleteCount, err := DeleteArtbookByID(ctx, artbookID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, err)
+		if !found {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  http.StatusBadRequest,
+				"message": "Missing ID parameter",
+				"detail":  "Ensure that an ID is provided to the request",
+			})
+
 			return
 		}
 
-		var message string
+		deleteCount, err := DeleteArtbookByID(ctx, artbookID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  http.StatusBadRequest,
+				"error":   err.Error(),
+				"message": "Failed to delete this artbook",
+				"detail":  "Ensure that the ID provided in the request is correct",
+			})
+
+			return
+		}
+
 		if deleteCount == 0 {
-			message = errors.ERR_ITEM_NOT_FOUND
-			c.JSON(http.StatusNotFound, message)
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  http.StatusNotFound,
+				"message": "Artbook not found",
+				"detail":  "Ensure that the ID provided in the request is correct",
+			})
 		} else {
-			message = "Artbook deleted successfully."
-			c.JSON(http.StatusOK, message)
+			c.JSON(http.StatusOK, gin.H{
+				"count":   deleteCount,
+				"status":  http.StatusOK,
+				"message": "Artbook deleted successfully",
+			})
 		}
 
 	}
@@ -147,8 +200,12 @@ func UpdateByID() gin.HandlerFunc {
 		update := make(map[string]interface{})
 
 		if err := json.Unmarshal(input, &update); err != nil {
-			log.Print(err)
-			c.JSON(http.StatusBadRequest, gin.H{"status": "400", "message": "Failed to parse JSON"})
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  http.StatusBadRequest,
+				"error":   err.Error(),
+				"message": "Failed to parse JSON",
+			})
+
 			return
 		}
 
@@ -157,17 +214,41 @@ func UpdateByID() gin.HandlerFunc {
 
 		artbookID, found := c.Params.Get("id")
 		if !found {
-			c.JSON(http.StatusBadRequest, gin.H{"status": "400", "message": "The requested ID is invalid"})
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  http.StatusBadRequest,
+				"message": "Missing ID parameter",
+				"detail":  "Ensure that an ID is provided to the request",
+			})
+
 			return
 		}
 
-		updatedArtbook := UpdateArtbookByID(ctx, artbookID, update)
+		updatedArtbook, err := UpdateArtbookByID(ctx, artbookID, update)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  http.StatusBadRequest,
+				"error":   err.Error(),
+				"message": "Failed to update this artbook",
+				"detail":  "Ensure that the ID and updated data provided in the request are correct",
+			})
+
+			return
+		}
+
 		if updatedArtbook == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"status": "400", "message": "Artbook not found"})
-			return
+			c.JSON(http.StatusBadRequest,
+				gin.H{
+					"status":  http.StatusBadRequest,
+					"message": "Artbook not found",
+					"detail":  "Ensure that the ID provided in the request is correct",
+				})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"status":  http.StatusOK,
+				"message": "Artbook updated successfully",
+				"result":  updatedArtbook,
+			})
 		}
-
-		c.JSON(http.StatusOK, gin.H{"status": "200", "message": "Artbook updated successfully"})
 
 	}
 
