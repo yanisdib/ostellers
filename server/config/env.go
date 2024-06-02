@@ -6,15 +6,13 @@ import (
 	"os"
 
 	"github.com/subosito/gotenv"
-
-	"yanisdib/ostellers/errors"
 )
 
 func GetMongoURI() string {
 
 	err := gotenv.Load()
 	if err != nil {
-		log.Fatal(errors.ERR_ENV_FILE_LOADING)
+		log.Fatal("Error occured while loading .env file")
 	}
 
 	dbUser := os.Getenv("ATLAS_DB_USER")
@@ -29,7 +27,7 @@ func GetDatabaseName() string {
 
 	err := gotenv.Load()
 	if err != nil {
-		log.Fatal(errors.ERR_ENV_FILE_LOADING)
+		log.Fatal("Error occured while loading .env file")
 	}
 
 	return os.Getenv("DB_NAME")

@@ -2,6 +2,7 @@ package artbook
 
 import (
 	"context"
+	"errors"
 	"log"
 	"time"
 
@@ -11,7 +12,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"yanisdib/ostellers/config"
-	"yanisdib/ostellers/errors"
 	"yanisdib/ostellers/product"
 )
 
@@ -25,9 +25,15 @@ func CreateArtbook(ctx context.Context, input *CreateInput) (*Artbook, error) {
 		return nil, err
 	}
 
+	// TODO: Here add check on existing artbook based on reference
+	isExisting, err := isExistingArtbook(ctx, input.Reference)
+	if isExisting {
+		return nil, err
+	}
+
 	result, err := artbooksCollection.InsertOne(ctx, newArtbook)
 	if err != nil {
-		defer log.Println(errors.ERR_ITEM_NOT_CREATED)
+		defer log.Println(ErrArtbookCreationFailed)
 		return nil, err
 	}
 
@@ -67,7 +73,7 @@ func GetArtbookByID(ctx context.Context, id string) (*Artbook, error) {
 
 	err := artbooksCollection.FindOne(ctx, bson.M{"_id": objectID}).Decode(&artbook)
 	if err != nil {
-		log.Println(errors.ERR_ITEM_NOT_FOUND)
+		log.Println(ErrArtbookRetrievalFailed)
 		return nil, err
 	}
 
@@ -87,7 +93,7 @@ func DeleteArtbookByID(ctx context.Context, id string) (deleteCount int64, err e
 	}
 
 	if result.DeletedCount == 0 {
-		log.Println(errors.ERR_ITEM_NOT_FOUND)
+		log.Println(ErrArtbookRetrievalFailed)
 	}
 
 	return result.DeletedCount, nil
@@ -168,5 +174,20 @@ func toArtbook(input *CreateInput) (*Artbook, error) {
 		Product:    product,
 		PagesCount: input.PagesCount,
 	}, nil
+
+}
+
+func isExistingArtbook(ctx context.Context, reference string) (bool, error) {
+
+	result, err := artbooksCollection.FindOne(ctx, bson.M{"reference": reference}).Raw()
+	if err != nil {
+		return false, err
+	}
+
+	if len(result) == 0 {
+		return false, nil
+	}
+
+	return true, errors.New(ErrArtbooksAlreadyExists)
 
 }
