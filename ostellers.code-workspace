@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.activityBar.location": "top",
+		"workbench.colorCustomizations": {
+		"activityBar.background": "#0a0f11",
+		"statusBar.background": "#0a0f11"
+		},
+		"editor.formatOnSave": true,
+		"indentRainbow.colorOnWhiteSpaceOnly": true,
+		"prettier.useTabs": true,
+		"editor.fontFamily": "'JetBrains Mono','Droid sans Mono','monospace', monospace",
+		"editor.fontSize": 14,
+		"editor.renderWhitespace": "all",
+		"editor.cursorStyle": "block",
+		"editor.cursorBlinking": "phase"
+	}
+}
